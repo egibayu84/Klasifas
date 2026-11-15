@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-custom p-4 mt-3">
+    <h4><i class="bi bi-tags me-2"></i>Kelola Kategori Fasilitas</h4>
+    <hr>
+    <form method="POST" class="row g-3 mb-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="col-md-5"><input type="text" name="nama" class="form-control" placeholder="Nama Kategori Baru" required></div>
+        <div class="col-md-5"><input type="text" name="unit" class="form-control" placeholder="Unit Penanggung Jawab" required></div>
+        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Tambah</button></div>
+    </form>
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr><th>ID</th><th>Nama Kategori</th><th>Unit</th><th>Status</th><th>Aksi</th></tr>
+        </thead>
+        <tbody>
+            {% for k in kategori_list %}
+            <tr>
+                <td>{{ k.id }}</td>
+                <td>{{ k.nama }}</td>
+                <td>{{ k.unit_penanggung_jawab }}</td>
+                <td>{% if k.is_active %}<span class="badge bg-success">Aktif</span>{% else %}<span class="badge bg-secondary">Nonaktif</span>{% endif %}</td>
+                <td>
+                    {% if k.is_active %}
+                    <form method="POST" action="{{ url_for('admin.nonaktifkan_kategori', id=k.id) }}" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Nonaktifkan kategori ini?')">Nonaktifkan</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-custom p-4 mt-3">
+    <h4><i class="bi bi-clock-history me-2"></i>Log Audit Perubahan Status</h4>
+    <hr>
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr><th>Waktu (WIB)</th><th>ID Laporan</th><th>Status Lama</th><th>Status Baru</th><th>Oleh Admin</th></tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.waktu | wib }}</td>
+                <td>#{{ log.complaint_id }}</td>
+                <td><span class="badge bg-secondary">{{ log.status_lama }}</span></td>
+                <td><span class="badge bg-success">{{ log.status_baru }}</span></td>
+                <td>{{ log.petugas.nama if log.petugas else log.petugas_id }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center">Belum ada log.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-speedometer2 me-2"></i>Dasbor Admin</h2>
+</div>
+
+<!-- Kartu Statistik -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card card-custom bg-primary text-white p-3">
+            <h5>Total Keluhan</h5>
+            <h2 class="mb-0">{{ total }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-custom bg-warning text-dark p-3">
+            <h5>Belum Diverifikasi</h5>
+            <h2 class="mb-0">{{ baru }}</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Area Grafik -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card card-custom p-3 h-100">
+            <h6 class="fw-bold text-muted mb-3">Keluhan per Kategori Fasilitas</h6>
+            <canvas id="kategoriChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card card-custom p-3 h-100">
+            <h6 class="fw-bold text-muted mb-3">Tren Keluhan Harian</h6>
+            <canvas id="trenChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tabel Keluhan -->
+<div class="card card-custom p-4">
+    <h5 class="mb-3">Daftar Keluhan Masuk</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Pelapor</th>
+                    <th>Lokasi</th>
+                    <th>Deskripsi</th>
+                    <th>Foto</th> <!-- KOLOM BARU -->
+                    <th>Klasifikasi AI</th>
+                    <th>Status</th>
+                    <th>Teknisi</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for k in keluhan_list %}
+                <tr>
+                    <td>{{ k.waktu_dibuat | wib }}</td>
+                    <td>{{ k.pelapor.nama }}</td>
+                    <td>{{ k.lokasi }}</td>
+                    <td>{{ k.teks }}</td>
+                    <td>
+                        {% if k.foto %}
+                            <a href="{{ url_for('static', filename='uploads/' + k.foto) }}" target="_blank">
+                                <img src="{{ url_for('static', filename='uploads/' + k.foto) }}" alt="Foto" style="max-width: 60px; border-radius: 5px;">
+                            </a>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if k.kategori_prediksi %}
+                            <span class="badge bg-info text-dark">{{ k.kategori_prediksi_rel.nama if k.kategori_prediksi_rel else 'Kategori ' + k.kategori_prediksi|string }}</span>
+                            <br><small class="text-muted">Keyakinan: {{ "%.2f"|format(k.probabilitas * 100) }}%</small>
+                        {% else %}
+                            <span class="badge bg-secondary">Tidak Terdeteksi</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if k.status == 'Baru' %}<span class="badge bg-danger">Baru</span>
+                        {% elif k.status == 'Terverifikasi' %}<span class="badge bg-warning text-dark">Diproses</span>
+                        {% elif k.status == 'Selesai' %}<span class="badge bg-success">Selesai</span>
+                        {% else %}<span class="badge bg-secondary">{{ k.status }}</span>{% endif %}
+                    </td>
+                    <td>{% if k.teknisi %}<span class="badge bg-primary">{{ k.teknisi }}</span>{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                    <td>
+                        {% if k.status == 'Baru' %}
+                            <form method="POST" action="{{ url_for('admin.verifikasi', id=k.id) }}" class="d-flex flex-column gap-1">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="kategori_final" class="form-select form-select-sm" required>
+                                    <option value="">Pilih Kategori...</option>
+                                    {% for kat in kategori_list %}
+                                    <option value="{{ kat.id }}">{{ kat.id }}. {{ kat.nama }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="teknisi" class="form-control form-control-sm" placeholder="Nama Teknisi" required>
+                                <button type="submit" class="btn btn-sm btn-primary">Tugaskan</button>
+                            </form>
+                        {% elif k.status == 'Terverifikasi' %}
+                            <form method="POST" action="{{ url_for('admin.selesaikan', id=k.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('Selesaikan laporan ini?')">
+                                    <i class="bi bi-check-circle me-1"></i> Tandai Selesai
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="text-success fw-bold"><i class="bi bi-check-all"></i> Tuntas</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted py-4">Belum ada laporan.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    new Chart(document.getElementById('kategoriChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: {{ labels_kategori | tojson }}, datasets: [{ label: 'Jumlah', data: {{ data_kategori | tojson }}, backgroundColor: 'rgba(13, 110, 253, 0.7)' }] },
+        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+    new Chart(document.getElementById('trenChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: {{ labels_tren | tojson }}, datasets: [{ label: 'Keluhan', data: {{ data_tren | tojson }}, borderColor: '#198754', backgroundColor: 'rgba(25, 135, 84, 0.2)', fill: true, tension: 0.3 }] },
+        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8 col-lg-6">
+        <div class="card card-custom p-4">
+            <div class="d-flex align-items-center mb-4 border-bottom pb-3">
+                <i class="bi bi-pencil-square fs-3 text-primary me-3"></i>
+                <div>
+                    <h4 class="fw-bold mb-0">Formulir Laporan Keluhan</h4>
+                    <p class="text-muted small mb-0">Isi detail kerusakan fasilitas dengan lengkap</p>
+                </div>
+            </div>
+            
+            <!-- ENCTYPE UNTUK UPLOAD FILE -->
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Deskripsi Keluhan</label>
+                    <textarea name="teks" class="form-control" rows="4" required placeholder="Contoh: AC di ruang 3.2 tidak dingin dan berair"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Lokasi Fasilitas</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                        <input type="text" name="lokasi" class="form-control" required placeholder="Contoh: Gedung A, Lantai 3, Ruang 3.2">
+                    </div>
+                </div>
+
+                <!-- UPLOAD FOTO -->
+                <div class="mb-4">
+                    <label class="form-label fw-medium">Upload Foto (Opsional)</label>
+                    <input type="file" name="foto" class="form-control" accept="image/*">
+                    <div class="form-text">Lampirkan foto kerusakan agar teknisi lebih mudah memahami.</div>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-custom py-2">
+                        <i class="bi bi-send me-2"></i> Kirim Laporan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
